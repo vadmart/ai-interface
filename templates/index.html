@@ -1,10 +1,156 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Чат із ШІ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            background: #e5ddd5;
+            width: 100%;
+            max-width: 1024px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: #4a90e2;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.me {
+            align-self: flex-end;
+            background-color: #95ecf4;
+            border-bottom-right-radius: 0;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background-color: #fff;
+            border-bottom-left-radius: 0;
+        }
+
+        .input-area {
+            background: #e5ddd5;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+        }
+
+        button.send-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
+<div class="chat-container">
+    <header>Чат із ШІ</header>
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Написати повідомлення..." autocomplete="off">
+        <button class="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+
+    const socketMock = {
+        on: function(event, callback) {
+            if (event === 'message') {
+                setTimeout(() => {
+                    const msg = { text: "Іван: Привіт! Як справи?", type: 'received' };
+                    if (callback) callback(msg);
+                }, 1500);
+            }
+        },
+        send: function(data) {
+            console.log('Відправлено на сервер:', data);
+        }
+    };
+
+    const messagesDiv = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const sendBtn = document.querySelector('.send-btn');
+
+    function addMessage(text, isMe) {
+        const div = document.createElement('div');
+        div.className = `message ${isMe ? 'me' : 'other'}`;
+        div.textContent = text;
+        messagesDiv.appendChild(div);
+        const container = document.querySelector('.messages');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function handleSend() {
+        const text = input.value;
+        if (!text) return;
+
+        addMessage(text, true);
+
+        socketMock.send(text);
+
+        input.value = '';
+    }
+
+    sendBtn.onclick = handleSend;
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleSend(); });
+
+    socketMock.on('message', (data) => {
+        addMessage(data.text, false);
+    });
+
+    setTimeout(() => {
+        addMessage("Вася: Привет!", false);
+    }, 500);
+
+</script>
 </body>
 </html>
