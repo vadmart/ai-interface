@@ -102,18 +102,24 @@
 
 <script>
 
-    const messages = document.getElementById('messages');
+    `
+    Message type: {id: 123, role: "assistant", content: "Some text"}
+    `
+
+    const messages = [];
+    const messagesUl = document.getElementById('messages');
     const messageForm = document.getElementById("message-form");
-    messageForm.addEventListener("submit", sendMessage);
 
     const messageInput = document.getElementById("messageInput");
 
     // Add message to a chat
-    function addMessage(content) {
+    function addMessage(data) {
+        messages.push(data);
+        console.log("Add new message. Messages:", messages);
         const message = document.createElement('li');
-        const textNode = document.createTextNode(content);
+        const textNode = document.createTextNode(data.content);
         message.appendChild(textNode);
-        messages.appendChild(message);
+        messagesUl.appendChild(message);
     }
 
     const ws = new WebSocket("ws://127.0.0.1:10000/ws");
@@ -141,11 +147,15 @@
 
     // Send message to a server
     function sendMessage(event) {
-        ws.send(messageInput.value);
-        addMessage(messageInput.value);
+        if (event) {
+            event.preventDefault();
+        }
+        const messageData = {id: crypto.randomUUID(), role: "user", content: messageInput.value}
+        ws.send(JSON.stringify(messageData));
+        addMessage(messageData);
         messageInput.value = "";
-        event.preventDefault();
     }
+    messageForm.addEventListener("submit", sendMessage);
 
     messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendMessage();
