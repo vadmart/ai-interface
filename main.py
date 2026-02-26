@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import AsyncIterator
+from typing import AsyncIterator, Coroutine, Any
 
 from starlette.testclient import TestClient
 
@@ -16,8 +16,6 @@ app = FastAPI()
 
 template = Jinja2Templates(directory="templates")
 
-MODEL_MESSAGES: list[Message] = [Message(role="system", content="You're a computer science nerd who answers with a bit of sarcasm")]
-
 @app.get("/")
 def read_root(request: Request):
     return template.TemplateResponse("index.html", {"request": request})
@@ -30,24 +28,29 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("WebSocket connection accepted")
         while True:
             data = await websocket.receive_json()
-            stream: AsyncIterator[ChatResponse] = await ollama_client.chat(MODEL_NAME, data=data, messages=MODEL_MESSAGES, stream=True)
+            stream: Coroutine[Any, Any, AsyncIterator[ChatResponse]] = ollama_client.chat(MODEL_NAME, messages=data, stream=True)
             message_id = uuid.uuid4().hex
-            async for part in stream:
-                await websocket.send({"id": message_id, **part.message})
+            async for part in await stream:
+                await websocket.send_json({"id": message_id, "content": part.message.content, "role": part.message.role})
             logger.info(f"WebSocket message: {data}")
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
     except Exception as ex:
-        logger.error(ex)
+        logger.exception(ex)
         try:
             await websocket.close(code=1011)
         except:
             pass
 
 
-def test_websocket(websocket: WebSocket):
+def test_websocket():
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
+        message = {"id": uuid.uuid4().hex, "content": "Hello World", "role": "user"}
+        websocket.send_json(message)
+        for _ in range(3):
+            data = websocket.receive_json()
+            assert {"id", "content", "role"} <= data.keys()
 
-        data = websocket.receive_json()
-        assert data
+if __name__ == "__main__":
+    test_websocket()

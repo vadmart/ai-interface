@@ -95,7 +95,7 @@
     <ul class="messages" id="messages"></ul>
 
     <form action="" class="input-area" id="message-form">
-        <input type="text" id="messageInput" autocomplete="off"/>
+        <input type="text" id="message-input" autocomplete="off"/>
         <button class="send-btn">Відправити</button>
     </form>
 </div>
@@ -106,11 +106,11 @@
     Message type: {id: 123, role: "assistant", content: "Some text"}
     `
 
-    const messages = [];
+    const messages = [{role: "system", content: "You're a computer science nerd who answers with a bit of sarcasm"}];
     const messagesUl = document.getElementById('messages');
     const messageForm = document.getElementById("message-form");
 
-    const messageInput = document.getElementById("messageInput");
+    const messageInput = document.getElementById("message-input");
 
     // Add message to a chat
     function addMessage(data) {
@@ -119,7 +119,35 @@
         const message = document.createElement('li');
         const textNode = document.createTextNode(data.content);
         message.appendChild(textNode);
+        message.id = `msg-${data.id}`;
         messagesUl.appendChild(message);
+    }
+
+    const messagesList = document.getElementById("messages");
+
+    // Handle incoming messages from WebSocket
+    function handleStreamChunk(messageId, token, role) {
+        let messageData = messages.find(m => m.id === messageId);
+
+        if (!messageData) {
+            messageData = { id: messageId, role: role, content: "" };
+            messages.push(messageData);
+        }
+
+        messageData.content += token;
+
+        let messageLi = document.getElementById(`msg-${messageId}`);
+
+        if (!messageLi) {
+            messageLi = document.createElement("li");
+            messageLi.id = `msg-${messageId}`; // Важно: ID должен быть уникальным строковым
+            messageLi.classList.add(role); // Например, класс "ai" или "user"
+            messagesList.appendChild(messageLi);
+        }
+
+        messageLi.textContent += token;
+
+        messagesList.scrollTop = messagesList.scrollHeight;
     }
 
     const ws = new WebSocket("ws://127.0.0.1:10000/ws");
@@ -127,7 +155,8 @@
         console.log("WebSocket connection established!");
     }
     ws.onmessage = function (event) {
-        addMessage(event.data);
+        const currMessage = JSON.parse(event.data);
+        handleStreamChunk(currMessage.id, currMessage.content, currMessage.role);
     };
     ws.onclose = function(event) {
       if (event.wasClean) {
@@ -147,19 +176,17 @@
 
     // Send message to a server
     function sendMessage(event) {
-        if (event) {
-            event.preventDefault();
-        }
+        event.preventDefault();
         const messageData = {id: crypto.randomUUID(), role: "user", content: messageInput.value}
-        ws.send(JSON.stringify(messageData));
         addMessage(messageData);
         messageInput.value = "";
+        ws.send(JSON.stringify(messages));
     }
     messageForm.addEventListener("submit", sendMessage);
 
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    // messageInput.addEventListener('keydown', (e) => {
+    //     if (e.key === 'Enter') sendMessage(e);
+    // });
 
 </script>
 </body>
