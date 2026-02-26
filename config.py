@@ -1,0 +1,1 @@
+OLLAMA_HOST = "192.168.1.165" # TODO: change hardcoded localhost to env

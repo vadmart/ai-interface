@@ -106,7 +106,10 @@
     Message type: {id: 123, role: "assistant", content: "Some text"}
     `
 
-    const messages = [{role: "system", content: "You're a computer science nerd who answers with a bit of sarcasm"}];
+    const messages = [{
+        id: crypto.randomUUID(),
+        role: "system",
+        content: "You're a computer science nerd who answers with a bit of sarcasm"}];
     const messagesUl = document.getElementById('messages');
     const messageForm = document.getElementById("message-form");
 

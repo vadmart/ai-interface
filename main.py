@@ -1,20 +1,42 @@
+import asyncio
 import logging
 import uuid
+from contextlib import asynccontextmanager
 from typing import AsyncIterator, Coroutine, Any
 
+from pydantic import BaseModel
 from starlette.testclient import TestClient
 
-from ai_client import ollama_client, MODEL_NAME
-from ollama import Message, ChatResponse
+from ollama import ChatResponse
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 
+from config import OLLAMA_HOST
+from services.llm_client import llm_client
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ws_debug")
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await llm_client.connect(host=OLLAMA_HOST)
+    yield
+    await llm_client.disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 
 template = Jinja2Templates(directory="templates")
+
+
+# -------------------------------------------------------------------
+# Schemas and Routes (Temporarily here)
+# -------------------------------------------------------------------
+class ChatRequest(BaseModel):
+    model_name: str
+    prompt: dict
 
 @app.get("/")
 def read_root(request: Request):
@@ -28,10 +50,11 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("WebSocket connection accepted")
         while True:
             data = await websocket.receive_json()
-            stream: Coroutine[Any, Any, AsyncIterator[ChatResponse]] = ollama_client.chat(MODEL_NAME, messages=data, stream=True)
+            stream = llm_client.chat(model_name="gpt-oss-120b:cpu", messages=data)
             message_id = uuid.uuid4().hex
             async for part in await stream:
-                await websocket.send_json({"id": message_id, "content": part.message.content, "role": part.message.role})
+                await websocket.send_json(
+                    {"id": message_id, "content": part.message.content, "role": part.message.role})
             logger.info(f"WebSocket message: {data}")
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
@@ -51,6 +74,7 @@ def test_websocket():
         for _ in range(3):
             data = websocket.receive_json()
             assert {"id", "content", "role"} <= data.keys()
+
 
 if __name__ == "__main__":
     test_websocket()
