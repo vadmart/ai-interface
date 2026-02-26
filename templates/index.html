@@ -13,7 +13,7 @@
             flex-direction: column;
         }
 
-        .chat-container {
+        .chat {
             display: flex;
             flex: 1;
             flex-direction: column;
@@ -32,8 +32,9 @@
             font-weight: bold;
         }
 
-        .messages {
+        .chat-box {
             flex: 1;
+            list-style: none;
             padding: 15px;
             overflow-y: auto;
             display: flex;
@@ -56,7 +57,7 @@
             border-bottom-right-radius: 0;
         }
 
-        .message.other {
+        .message.assistant {
             align-self: flex-start;
             background-color: #fff;
             border-bottom-left-radius: 0;
@@ -90,10 +91,9 @@
 </head>
 <body>
 
-<div class="chat-container">
+<div class="chat">
     <header>Чат із ШІ</header>
-    <ul class="messages" id="messages"></ul>
-
+    <ul class="chat-box" id="messages"></ul>
     <form action="" class="input-area" id="message-form">
         <input type="text" id="message-input" autocomplete="off"/>
         <button class="send-btn">Відправити</button>
@@ -123,6 +123,7 @@
         const textNode = document.createTextNode(data.content);
         message.appendChild(textNode);
         message.id = `msg-${data.id}`;
+        message.classList.add("message", "me", data.role);
         messagesUl.appendChild(message);
     }
 
@@ -143,8 +144,8 @@
 
         if (!messageLi) {
             messageLi = document.createElement("li");
-            messageLi.id = `msg-${messageId}`; // Важно: ID должен быть уникальным строковым
-            messageLi.classList.add(role); // Например, класс "ai" или "user"
+            messageLi.id = `msg-${messageId}`;
+            messageLi.classList.add("message", "assistant", role);
             messagesList.appendChild(messageLi);
         }
 
