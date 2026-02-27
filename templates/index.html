@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <title>Чат із ШІ</title>
     <style>
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
         body {
             font-family: sans-serif;
             background-color: #f0f2f5;
-            margin: 0;
-            height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -19,6 +24,7 @@
             flex-direction: column;
             background: #e5ddd5;
             width: 100%;
+            height: 100vh;
             /*max-width: 1024px;*/
             margin: 0 auto;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
@@ -33,7 +39,7 @@
         }
 
         .chat-box {
-            flex: 1;
+            flex-grow: 1;
             list-style: none;
             padding: 15px;
             overflow-y: auto;
@@ -64,10 +70,11 @@
         }
 
         .input-area {
-            background: #e5ddd5;
+            background: 0;
             padding: 10px;
             display: flex;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         input[type="text"] {
@@ -91,14 +98,14 @@
 </head>
 <body>
 
-<div class="chat">
-    <header>Чат із ШІ</header>
-    <ul class="chat-box" id="messages"></ul>
-    <form action="" class="input-area" id="message-form">
-        <input type="text" id="message-input" autocomplete="off"/>
-        <button class="send-btn">Відправити</button>
-    </form>
-</div>
+    <div class="chat">
+        <header>Чат із ШІ</header>
+        <ul class="chat-box" id="messages"></ul>
+        <form action="" class="input-area" id="message-form">
+            <input type="text" id="message-input" autocomplete="off"/>
+            <button class="send-btn">Відправити</button>
+        </form>
+    </div>
 <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <script>
 
@@ -108,10 +115,78 @@
 
 
 
-    const messages = [{
-        id: crypto.randomUUID(),
-        role: "system",
-        content: "You're a computer science nerd who answers with a bit of sarcasm"}];
+    const messages = [
+  {
+    "id": "msg_a1b2c3d4",
+    "role": "user",
+    "content": "Привет! Напиши простенький пример эндпоинта на FastAPI, чтобы проверить работу моего нового ИИ-чата."
+  },
+  {
+    "id": "msg_e5f6g7h8",
+    "role": "assistant",
+    "content": "Привет! Без проблем. Вот классический пример роута для проверки статуса API. Он просто возвращает JSON с сообщением.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n# Basic health check endpoint\n@app.get('/health')\nasync def health_check():\n    return {'status': 'ok', 'message': 'AI Chat Backend is running!'}\n```\n\nЗапускай через `uvicorn main:app --reload` и проверяй в браузере."
+  },
+  {
+    "id": "msg_i9j0k1l2",
+    "role": "user",
+    "content": "Отлично, работает! А как насчет стриминга через вебсокеты? Есть базовый шаблон, чтобы протестить коннект с фронтом?"
+  },
+  {
+    "id": "msg_m3n4o5p6",
+    "role": "assistant",
+    "content": "Конечно. Для стриминга токенов вебсокеты подходят идеально. Вот минимальный сетап, который отдает текст по кусочкам:\n\n1. Принимаем соединение\n2. Крутим бесконечный цикл для прослушивания\n3. Имитируем потоковую отдачу токенов\n\n```python\nfrom fastapi import WebSocket, WebSocketDisconnect\n\n# WebSocket endpoint for streaming\n@app.websocket('/ws/chat')\nasync def chat_ws(websocket: WebSocket):\n    await websocket.accept()\n    try:\n        while True:\n            # Wait for user input\n            data = await websocket.receive_text()\n            \n            # Send fake streaming chunks\n            await websocket.send_text('Thinking')\n            await websocket.send_text(' about')\n            await websocket.send_text(' your')\n            await websocket.send_text(' prompt...')\n            \n            # Send termination flag\n            await websocket.send_text('<|DONE|>')\n            \n    except WebSocketDisconnect:\n        # Handle disconnects gracefully\n        print('Client disconnected')\n```\n\nТут главное не забыть отправлять маркер `<|DONE|>`, чтобы твой JS на клиенте понимал, когда ответ завершен."
+  },
+  {
+    "id": "msg_q7r8s9t0",
+    "role": "user",
+    "content": "Понял, спасибо! Сейчас скормлю это своему скрипту и проверю, как отрабатывает marked.js на темной теме."
+  },
+          {
+    "id": "msg_e5f6g7h8",
+    "role": "assistant",
+    "content": "Привет! Без проблем. Вот классический пример роута для проверки статуса API. Он просто возвращает JSON с сообщением.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n# Basic health check endpoint\n@app.get('/health')\nasync def health_check():\n    return {'status': 'ok', 'message': 'AI Chat Backend is running!'}\n```\n\nЗапускай через `uvicorn main:app --reload` и проверяй в браузере."
+  },
+  {
+    "id": "msg_i9j0k1l2",
+    "role": "user",
+    "content": "Отлично, работает! А как насчет стриминга через вебсокеты? Есть базовый шаблон, чтобы протестить коннект с фронтом?"
+  },
+  {
+    "id": "msg_m3n4o5p6",
+    "role": "assistant",
+    "content": "Конечно. Для стриминга токенов вебсокеты подходят идеально. Вот минимальный сетап, который отдает текст по кусочкам:\n\n1. Принимаем соединение\n2. Крутим бесконечный цикл для прослушивания\n3. Имитируем потоковую отдачу токенов\n\n```python\nfrom fastapi import WebSocket, WebSocketDisconnect\n\n# WebSocket endpoint for streaming\n@app.websocket('/ws/chat')\nasync def chat_ws(websocket: WebSocket):\n    await websocket.accept()\n    try:\n        while True:\n            # Wait for user input\n            data = await websocket.receive_text()\n            \n            # Send fake streaming chunks\n            await websocket.send_text('Thinking')\n            await websocket.send_text(' about')\n            await websocket.send_text(' your')\n            await websocket.send_text(' prompt...')\n            \n            # Send termination flag\n            await websocket.send_text('<|DONE|>')\n            \n    except WebSocketDisconnect:\n        # Handle disconnects gracefully\n        print('Client disconnected')\n```\n\nТут главное не забыть отправлять маркер `<|DONE|>`, чтобы твой JS на клиенте понимал, когда ответ завершен."
+  },
+  {
+    "id": "msg_q7r8s9t0",
+    "role": "user",
+    "content": "Понял, спасибо! Сейчас скормлю это своему скрипту и проверю, как отрабатывает marked.js на темной теме."
+  },
+          {
+    "id": "msg_e5f6g7h8",
+    "role": "assistant",
+    "content": "Привет! Без проблем. Вот классический пример роута для проверки статуса API. Он просто возвращает JSON с сообщением.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n# Basic health check endpoint\n@app.get('/health')\nasync def health_check():\n    return {'status': 'ok', 'message': 'AI Chat Backend is running!'}\n```\n\nЗапускай через `uvicorn main:app --reload` и проверяй в браузере."
+  },
+  {
+    "id": "msg_i9j0k1l2",
+    "role": "user",
+    "content": "Отлично, работает! А как насчет стриминга через вебсокеты? Есть базовый шаблон, чтобы протестить коннект с фронтом?"
+  },
+  {
+    "id": "msg_m3n4o5p6",
+    "role": "assistant",
+    "content": "Конечно. Для стриминга токенов вебсокеты подходят идеально. Вот минимальный сетап, который отдает текст по кусочкам:\n\n1. Принимаем соединение\n2. Крутим бесконечный цикл для прослушивания\n3. Имитируем потоковую отдачу токенов\n\n```python\nfrom fastapi import WebSocket, WebSocketDisconnect\n\n# WebSocket endpoint for streaming\n@app.websocket('/ws/chat')\nasync def chat_ws(websocket: WebSocket):\n    await websocket.accept()\n    try:\n        while True:\n            # Wait for user input\n            data = await websocket.receive_text()\n            \n            # Send fake streaming chunks\n            await websocket.send_text('Thinking')\n            await websocket.send_text(' about')\n            await websocket.send_text(' your')\n            await websocket.send_text(' prompt...')\n            \n            # Send termination flag\n            await websocket.send_text('<|DONE|>')\n            \n    except WebSocketDisconnect:\n        # Handle disconnects gracefully\n        print('Client disconnected')\n```\n\nТут главное не забыть отправлять маркер `<|DONE|>`, чтобы твой JS на клиенте понимал, когда ответ завершен."
+  },
+  {
+    "id": "msg_q7r8s9t0",
+    "role": "user",
+    "content": "Понял, спасибо! Сейчас скормлю это своему скрипту и проверю, как отрабатывает marked.js на темной теме."
+  }
+];
+
+        // [{
+        // id: crypto.randomUUID(),
+        // role: "system",
+        // content: "You're a computer science nerd who answers with a bit of sarcasm"}];
     const messagesUl = document.getElementById('messages');
     const messageForm = document.getElementById("message-form");
 
@@ -119,6 +194,14 @@
     const messagesList = document.getElementById("messages");
     let currentMessageText = "";
     let currentMessageElement = null;
+
+    messages.forEach(m => {
+        const messageLi = document.createElement('li');
+        messageLi.innerHTML = marked.parse(m.content);
+        messageLi.id = `msg-${m.id}`;
+        messageLi.classList.add("message", m.role);
+        messagesUl.appendChild(messageLi);
+    })
 
 
     // Add message to a chat
