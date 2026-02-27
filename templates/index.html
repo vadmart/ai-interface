@@ -44,14 +44,14 @@
 
         .message {
             max-width: 75%;
-            padding: 8px 12px;
+            padding: 0 12px;
             border-radius: 12px;
             font-size: 14px;
             line-height: 1.4;
             position: relative;
         }
 
-        .message.me {
+        .message.user {
             align-self: flex-end;
             background-color: #95ecf4;
             border-bottom-right-radius: 0;
@@ -99,12 +99,14 @@
         <button class="send-btn">Відправити</button>
     </form>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <script>
 
     `
     Message type: {id: 123, role: "assistant", content: "Some text"}
     `
+
+
 
     const messages = [{
         id: crypto.randomUUID(),
@@ -114,20 +116,24 @@
     const messageForm = document.getElementById("message-form");
 
     const messageInput = document.getElementById("message-input");
+    const messagesList = document.getElementById("messages");
+    let currentMessageText = "";
+    let currentMessageElement = null;
+
 
     // Add message to a chat
     function addMessage(data) {
         messages.push(data);
         console.log("Add new message. Messages:", messages);
-        const message = document.createElement('li');
+        const messageLi = document.createElement('li');
+        const p = document.createElement('p');
         const textNode = document.createTextNode(data.content);
-        message.appendChild(textNode);
-        message.id = `msg-${data.id}`;
-        message.classList.add("message", "me", data.role);
-        messagesUl.appendChild(message);
+        p.appendChild(textNode);
+        messageLi.appendChild(p);
+        messageLi.id = `msg-${data.id}`;
+        messageLi.classList.add("message", data.role);
+        messagesUl.appendChild(messageLi);
     }
-
-    const messagesList = document.getElementById("messages");
 
     // Handle incoming messages from WebSocket
     function handleStreamChunk(messageId, token, role) {
@@ -140,16 +146,9 @@
 
         messageData.content += token;
 
-        let messageLi = document.getElementById(`msg-${messageId}`);
+        currentMessageElement.id = `msg-${messageId}`;
+        currentMessageElement.innerHTML = marked.parse(messageData.content);
 
-        if (!messageLi) {
-            messageLi = document.createElement("li");
-            messageLi.id = `msg-${messageId}`;
-            messageLi.classList.add("message", "assistant", role);
-            messagesList.appendChild(messageLi);
-        }
-
-        messageLi.textContent += token;
 
         messagesList.scrollTop = messagesList.scrollHeight;
     }
@@ -161,6 +160,7 @@
     ws.onmessage = function (event) {
         const currMessage = JSON.parse(event.data);
         handleStreamChunk(currMessage.id, currMessage.content, currMessage.role);
+        // handleStreamChunk(currMessage.id, currMessage.content, currMessage.role);
     };
     ws.onclose = function(event) {
       if (event.wasClean) {
@@ -183,8 +183,12 @@
         event.preventDefault();
         const messageData = {id: crypto.randomUUID(), role: "user", content: messageInput.value}
         addMessage(messageData);
-        messageInput.value = "";
         ws.send(JSON.stringify(messages));
+        messageInput.value = "";
+        currentMessageText = "";
+        currentMessageElement = document.createElement("li");
+        currentMessageElement.classList.add("message", "assistant");
+        messagesList.appendChild(currentMessageElement);
     }
     messageForm.addEventListener("submit", sendMessage);
 
